@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Planning Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0;
+            min-height: 80vh;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+
+        .content {
+            padding: 30px;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-card h4 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .scenario-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scenario-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .scenario-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .scenario-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .tax-summary {
+            background: #e8f4fd;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .tax-summary h4 {
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .content {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Financial Planning Calculator</h1>
+            <p>Plan your financial future with comprehensive modeling and projections</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <!-- Income & Tax Information -->
+                <div class="input-group">
+                    <h3>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                        Income & Tax Info
+                    </h3>
+                    <div class="form-row">
+                        <div>
+                            <label for="income">Annual Gross Income</label>
+                            <input type="number" id="income" value="75000" min="0" step="1000">
+                        </div>
+                        <div>
+                            <label for="state">State</label>
+                            <select id="state">
+                                <option value="TX">Texas</option>
+                                <option value="CA">California</option>
+                                <option value="NY">New York</option>
+                                <option value="FL">Florida</option>
+                                <option value="WA">Washington</option>
+                                <option value="NV">Nevada</option>
+                                <option value="TN">Tennessee</option>
+                                <option value="NH">New Hampshire</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="filing-status">Filing Status</label>
+                            <select id="filing-status">
+                                <option value="single">Single</option>
+                                <option value="married">Married Filing Jointly</option>
+                                <option value="married-separate">Married Filing Separately</option>
+                                <option value="head">Head of Household</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="current-age">Current Age</label>
+                            <input type="number" id="current-age" value="25" min="18" max="65">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="itemized-deductions">
+                        <label for="itemized-deductions">Use Itemized Deductions</label>
+                    </div>
+                    <div id="itemized-amount" style="display: none; margin-top: 10px;">
+                        <label for="itemized-value">Itemized Deductions Amount</label>
+                        <input type="number" id="itemized-value" value="15000" min="0" step="100">
+                    </div>
+                </div>
+
+                <!-- Current Financial Situation -->
+                <div class="input-group">
+                    <h3>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path
+                                d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" />
+                        </svg>
+                        Current Financial Situation
+                    </h3>
+                    <div class="form-row">
+                        <div>
+                            <label for="current-savings">Current Savings</label>
+                            <input type="number" id="current-savings" value="10000" min="0" step="100">
+                        </div>
+                        <div>
+                            <label for="current-401k">Current 401k Balance</label>
+                            <input type="number" id="current-401k" value="5000" min="0" step="100">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="current-ira">Current Roth IRA Balance</label>
+                            <input type="number" id="current-ira" value="2000" min="0" step="100">
+                        </div>
+                        <div>
+                            <label for="current-hsa">Current HSA Balance</label>
+                            <input type="number" id="current-hsa" value="1000" min="0" step="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Annual Contributions -->
+                <div class="input-group">
+                    <h3>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path
+                                d="M7 4V2c0-.55-.45-1-1-1s-1 .45-1 1v2C3.8 4.2 3 5.12 3 6.2V11c0 2.07 1.12 3.88 2.8 4.74L6 22h2.5l-.4-4h7.8l-.4 4H18l.2-6.26C19.88 14.88 21 13.07 21 11V6.2c0-1.08-.8-2-1.8-2.2V2c0-.55-.45-1-1-1s-1 .45-1 1v2h-1V2c0-.55-.45-1-1-1s-1 .45-1 1v2h-1V2c0-.55-.45-1-1-1s-1 .45-1 1v2h-1V2c0-.55-.45-1-1-1s-1 .45-1 1v2H7zm8 6H9c-.55 0-1-.45-1-1s.45-1 1-1h6c.55 0 1 .45 1 1s-.45 1-1 1z" />
+                        </svg>
+                        Annual Contributions
+                    </h3>
+                    <div class="form-row">
+                        <div>
+                            <label for="hsa-contrib">HSA Contribution</label>
+                            <input type="number" id="hsa-contrib" value="3000" min="0" step="100">
+                            <small style="color: #6c757d;">Max: $3,650 (2024)</small>
+                        </div>
+                        <div>
+                            <label for="contrib-401k">401k Contribution</label>
+                            <input type="number" id="contrib-401k" value="6000" min="0" step="100">
+                            <small style="color: #6c757d;">Max: $22,500 (2024)</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="roth-ira">Roth IRA Contribution</label>
+                            <input type="number" id="roth-ira" value="6000" min="0" step="100">
+                            <small style="color: #6c757d;">Max: $6,000 (2024)</small>
+                        </div>
+                        <div>
+                            <label for="brokerage-contrib">Brokerage Account</label>
+                            <input type="number" id="brokerage-contrib" value="12000" min="0" step="100">
+                        </div>
+                    </div>
+                    <div class="form-row full">
+                        <div>
+                            <label for="savings-contrib">High-Interest Savings</label>
+                            <input type="number" id="savings-contrib" value="6000" min="0" step="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals -->
+                <div class="input-group">
+                    <h3>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                        </svg>
+                        Financial Goals
+                    </h3>
+                    <div class="form-row">
+                        <div>
+                            <label for="house-years">House Purchase (Years)</label>
+                            <input type="number" id="house-years" value="5" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="house-price">Target House Price</label>
+                            <input type="number" id="house-price" value="400000" min="50000" step="10000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="down-payment">Down Payment %</label>
+                            <input type="number" id="down-payment" value="20" min="3" max="50">
+                        </div>
+                        <div>
+                            <label for="retirement-age">Target Retirement Age</label>
+                            <input type="number" id="retirement-age" value="65" min="50" max="75">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Investment Assumptions -->
+                <div class="input-group">
+                    <h3>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" />
+                        </svg>
+                        Investment Returns (Annual %)
+                    </h3>
+                    <div class="form-row">
+                        <div>
+                            <label for="stock-return">Stock Market</label>
+                            <input type="number" id="stock-return" value="7" min="4" max="12" step="0.1">
+                        </div>
+                        <div>
+                            <label for="bond-return">Bonds</label>
+                            <input type="number" id="bond-return" value="4" min="2" max="8" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="savings-rate">High-Interest Savings</label>
+                            <input type="number" id="savings-rate" value="4.5" min="2" max="8" step="0.1">
+                        </div>
+                        <div>
+                            <label for="inflation-rate">Inflation Rate</label>
+                            <input type="number" id="inflation-rate" value="3" min="1" max="5" step="0.1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Summary Cards -->
+                <div class="results-grid">
+                    <div class="stat-card">
+                        <h4>Monthly Take-Home</h4>
+                        <div class="value" id="take-home">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Annual Tax Savings</h4>
+                        <div class="value" id="tax-savings">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Employer 401k Match</h4>
+                        <div class="value" id="employer-match">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Down Payment Needed</h4>
+                        <div class="value" id="down-payment-amount">$0</div>
+                    </div>
+                </div>
+
+                <!-- Tax Summary -->
+                <div class="tax-summary">
+                    <h4>Tax Breakdown</h4>
+                    <div id="tax-breakdown"></div>
+                </div>
+
+                <!-- Scenario Comparison -->
+                <div class="chart-container">
+                    <h3>Scenario Comparison</h3>
+                    <div class="scenario-selector">
+                        <button class="scenario-btn active" data-scenario="current">Current Plan</button>
+                        <button class="scenario-btn" data-scenario="aggressive">Aggressive Investing</button>
+                        <button class="scenario-btn" data-scenario="conservative">Conservative</button>
+                        <button class="scenario-btn" data-scenario="house-focused">House-Focused</button>
+                    </div>
+                    <canvas id="projectionChart" width="800" height="400"></canvas>
+                </div>
+
+                <!-- Account Growth Chart -->
+                <div class="chart-container">
+                    <h3>Account Growth Over Time</h3>
+                    <canvas id="accountChart" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for charts
+        let projectionChart;
+        let accountChart;
+
+        // Tax brackets for 2024
+        const taxBrackets = {
+            single: [
+                { min: 0, max: 11000, rate: 0.10 },
+                { min: 11000, max: 44725, rate: 0.12 },
+                { min: 44725, max: 95375, rate: 0.22 },
+                { min: 95375, max: 182050, rate: 0.24 },
+                { min: 182050, max: 231250, rate: 0.32 },
+                { min: 231250, max: 578125, rate: 0.35 },
+                { min: 578125, max: Infinity, rate: 0.37 }
+            ],
+            married: [
+                { min: 0, max: 22000, rate: 0.10 },
+                { min: 22000, max: 89450, rate: 0.12 },
+                { min: 89450, max: 190750, rate: 0.22 },
+                { min: 190750, max: 364200, rate: 0.24 },
+                { min: 364200, max: 462500, rate: 0.32 },
+                { min: 462500, max: 693750, rate: 0.35 },
+                { min: 693750, max: Infinity, rate: 0.37 }
+            ]
+        };
+
+        const standardDeductions = {
+            single: 13850,
+            married: 27700,
+            'married-separate': 13850,
+            head: 20800
+        };
+
+        const stateTaxRates = {
+            // No state income tax
+            'TX': 0, 'FL': 0, 'NV': 0, 'TN': 0, 'WA': 0, 'NH': 0, 'WY': 0, 'SD': 0, 'AK': 0,
+            // Progressive state taxes (using approximate effective rates)
+            'CA': 0.093, 'NY': 0.068, 'NJ': 0.057, 'MA': 0.051, 'CT': 0.050,
+            'OR': 0.087, 'MN': 0.068, 'DC': 0.063, 'VT': 0.066, 'ME': 0.054,
+            'HI': 0.072, 'WI': 0.053, 'IA': 0.044, 'NE': 0.041, 'KS': 0.031,
+            'ID': 0.036, 'WV': 0.035, 'SC': 0.035, 'MO': 0.032, 'OK': 0.025,
+            'LA': 0.021, 'KY': 0.025, 'AL': 0.024, 'MS': 0.025, 'NM': 0.029,
+            'AZ': 0.025, 'GA': 0.031, 'NC': 0.033, 'VA': 0.038, 'MD': 0.048,
+            'DE': 0.044, 'RI': 0.037, 'MT': 0.047, 'UT': 0.037, 'CO': 0.033,
+            'IN': 0.032, 'MI': 0.034, 'OH': 0.028, 'IL': 0.032, 'PA': 0.031,
+            'ND': 0.013, 'AR': 0.034
+        };
+
+        // Calculate taxes
+        function calculateTaxes(income, filingStatus, deductions, state, preTaskDeductions = 0) {
+            // Apply pre-tax deductions first (401k, HSA, etc.)
+            const adjustedGrossIncome = income - preTaskDeductions;
+
+            // Then apply standard/itemized deductions
+            const taxableIncome = Math.max(0, adjustedGrossIncome - deductions);
+
+            const brackets = filingStatus === 'married' ? taxBrackets.married : taxBrackets.single;
+
+            let federalTax = 0;
+            for (const bracket of brackets) {
+                if (taxableIncome > bracket.min) {
+                    const taxableAtBracket = Math.min(taxableIncome, bracket.max) - bracket.min;
+                    federalTax += taxableAtBracket * bracket.rate;
+                }
+            }
+
+            // State tax on adjusted gross income (most states)
+            const stateTaxableIncome = Math.max(0, adjustedGrossIncome - (deductions * 0.8)); // Most states have lower deductions
+            const stateTax = stateTaxableIncome * (stateTaxRates[state] || 0);
+
+            // FICA taxes on full income (no deduction relief)
+            const socialSecurity = Math.min(income * 0.062, 160200 * 0.062);
+            const medicare = income * 0.0145;
+
+            return {
+                federal: federalTax,
+                state: stateTax,
+                socialSecurity: socialSecurity,
+                medicare: medicare,
+                total: federalTax + stateTax + socialSecurity + medicare
+            };
+        }
+
+        // Calculate employer 401k match
+        function calculateEmployerMatch(contribution) {
+            let match = 0;
+            if (contribution >= 3000) {
+                match += 3000; // 100% of first 3k
+                if (contribution >= 6000) {
+                    match += 1500; // 50% of next 3k
+                } else {
+                    match += (contribution - 3000) * 0.5;
+                }
+            } else {
+                match = contribution; // 100% match up to 3k
+            }
+            return Math.min(match, 4500); // Max possible match
+        }
+
+        // Calculate projections for different scenarios
+        function calculateScenarios() {
+            const income = parseFloat(document.getElementById('income').value);
+            const currentAge = parseInt(document.getElementById('current-age').value);
+            const retirementAge = parseInt(document.getElementById('retirement-age').value);
+            const yearsToRetirement = retirementAge - currentAge;
+
+            const stockReturn = parseFloat(document.getElementById('stock-return').value) / 100;
+            const bondReturn = parseFloat(document.getElementById('bond-return').value) / 100;
+            const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
+            const inflationRate = parseFloat(document.getElementById('inflation-rate').value) / 100;
+
+            const scenarios = {
+                current: {
+                    name: 'Current Plan',
+                    hsa: parseFloat(document.getElementById('hsa-contrib').value),
+                    contrib401k: parseFloat(document.getElementById('contrib-401k').value),
+                    rothIRA: parseFloat(document.getElementById('roth-ira').value),
+                    brokerage: parseFloat(document.getElementById('brokerage-contrib').value),
+                    savings: parseFloat(document.getElementById('savings-contrib').value)
+                },
+                aggressive: {
+                    name: 'Aggressive Investing',
+                    hsa: 3650,
+                    contrib401k: Math.min(income * 0.15, 22500),
+                    rothIRA: 6000,
+                    brokerage: Math.max(0, income * 0.2 - 3650 - Math.min(income * 0.15, 22500) - 6000),
+                    savings: income * 0.05
+                },
+                conservative: {
+                    name: 'Conservative',
+                    hsa: 2000,
+                    contrib401k: 6000,
+                    rothIRA: 3000,
+                    brokerage: 3000,
+                    savings: income * 0.15
+                },
+                'house-focused': {
+                    name: 'House-Focused',
+                    hsa: 3650,
+                    contrib401k: 4500, // Just enough for full match
+                    rothIRA: 2000,
+                    brokerage: 5000,
+                    savings: income * 0.2
+                }
+            };
+
+            const projections = {};
+
+            for (const [key, scenario] of Object.entries(scenarios)) {
+                const projection = [];
+                let totalValue = 0;
+
+                // Starting balances
+                let hsaBalance = parseFloat(document.getElementById('current-hsa').value);
+                let contrib401kBalance = parseFloat(document.getElementById('current-401k').value);
+                let iraBalance = parseFloat(document.getElementById('current-ira').value);
+                let brokerageBalance = 0;
+                let savingsBalance = parseFloat(document.getElementById('current-savings').value);
+
+                for (let year = 0; year <= yearsToRetirement; year++) {
+                    // Add contributions
+                    hsaBalance += scenario.hsa;
+                    contrib401kBalance += scenario.contrib401k + calculateEmployerMatch(scenario.contrib401k);
+                    iraBalance += scenario.rothIRA;
+                    brokerageBalance += scenario.brokerage;
+                    savingsBalance += scenario.savings;
+
+                    // Apply returns
+                    hsaBalance *= (1 + stockReturn);
+                    contrib401kBalance *= (1 + stockReturn);
+                    iraBalance *= (1 + stockReturn);
+                    brokerageBalance *= (1 + stockReturn);
+                    savingsBalance *= (1 + savingsRate);
+
+                    totalValue = hsaBalance + contrib401kBalance + iraBalance + brokerageBalance + savingsBalance;
+
+                    projection.push({
+                        year: currentAge + year,
+                        totalValue: totalValue,
+                        hsa: hsaBalance,
+                        contrib401k: contrib401kBalance,
+                        ira: iraBalance,
+                        brokerage: brokerageBalance,
+                        savings: savingsBalance
+                    });
+                }
+
+                projections[key] = projection;
+            }
+
+            return projections;
+        }
+
+        // Update all calculations
+        function updateCalculations() {
+            const income = parseFloat(document.getElementById('income').value);
+            const state = document.getElementById('state').value;
+            const filingStatus = document.getElementById('filing-status').value;
+            const useItemized = document.getElementById('itemized-deductions').checked;
+            const itemizedAmount = parseFloat(document.getElementById('itemized-value').value);
+
+            const hsa = parseFloat(document.getElementById('hsa-contrib').value);
+            const contrib401k = parseFloat(document.getElementById('contrib-401k').value);
+
+            // Calculate deductions
+            const standardDeduction = standardDeductions[filingStatus];
+            const deductions = useItemized ? itemizedAmount : standardDeduction;
+            const preTaskDeductions = hsa + contrib401k; // Pre-tax deductions
+            const taxableIncome = income - preTaskDeductions;
+
+            // Calculate taxes
+            const taxes = calculateTaxes(taxableIncome, filingStatus, deductions, state);
+            const employerMatch = calculateEmployerMatch(contrib401k);
+            const netIncome = income - taxes.total - preTaskDeductions;
+            const monthlyTakeHome = netIncome / 12;
+
+            // Calculate tax savings from pre-tax contributions
+            const taxesWithoutPreTax = calculateTaxes(income, filingStatus, deductions, state);
+            const taxSavings = taxesWithoutPreTax.total - taxes.total;
+
+            // Update house calculations
+            const housePrice = parseFloat(document.getElementById('house-price').value);
+            const downPaymentPercent = parseFloat(document.getElementById('down-payment').value) / 100;
+            const downPaymentAmount = housePrice * downPaymentPercent;
+
+            // Update display
+            document.getElementById('take-home').textContent = `$${monthlyTakeHome.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+            document.getElementById('tax-savings').textContent = `$${taxSavings.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+            document.getElementById('employer-match').textContent = `$${employerMatch.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+            document.getElementById('down-payment-amount').textContent = `$${downPaymentAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+
+            // Update tax breakdown
+            document.getElementById('tax-breakdown').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                    <div>Federal Tax: $${taxes.federal.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                    <div>State Tax: $${taxes.state.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                    <div>Social Security: $${taxes.socialSecurity.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                    <div>Medicare: $${taxes.medicare.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                    <div style="grid-column: 1 / -1; font-weight: bold; border-top: 1px solid #0056b3; padding-top: 5px; margin-top: 5px;">
+                        Total Tax: $${taxes.total.toLocaleString('en-US', { maximumFractionDigits: 0 })} (${((taxes.total / income) * 100).toFixed(1)}%)
+                    </div>
+                </div>
+            `;
+
+            // Update charts
+            updateCharts();
+        }
+
+        // Update charts
+        function updateCharts() {
+            const projections = calculateScenarios();
+            updateProjectionChart(projections);
+            updateAccountChart(projections);
+        }
+
+        // Update projection chart
+        function updateProjectionChart(projections) {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+
+            if (projectionChart) {
+                projectionChart.destroy();
+            }
+
+            const activeScenario = document.querySelector('.scenario-btn.active').dataset.scenario;
+            const data = projections[activeScenario];
+
+            projectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.year),
+                    datasets: [{
+                        label: 'Total Portfolio Value',
+                        data: data.map(d => d.totalValue),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Portfolio Value ($)'
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Update account breakdown chart
+        function updateAccountChart(projections) {
+            const ctx = document.getElementById('accountChart').getContext('2d');
+
+            if (accountChart) {
+                accountChart.destroy();
+            }
+
+            const activeScenario = document.querySelector('.scenario-btn.active').dataset.scenario;
+            const data = projections[activeScenario];
+
+            accountChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.year),
+                    datasets: [
+                        {
+                            label: '401(k)',
+                            data: data.map(d => d.contrib401k),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'Roth IRA',
+                            data: data.map(d => d.ira),
+                            borderColor: '#f39c12',
+                            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'HSA',
+                            data: data.map(d => d.hsa),
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'Brokerage',
+                            data: data.map(d => d.brokerage),
+                            borderColor: '#9b59b6',
+                            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'Savings',
+                            data: data.map(d => d.savings),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Account Balance ($)'
+                            },
+                            stacked: true,
+                            ticks: {
+                                callback: function (value) {
+                                    if (value >= 1000000) {
+                                        return '$' + (value / 1000000).toFixed(1) + 'M';
+                                    } else if (value >= 1000) {
+                                        return '$' + (value / 1000).toFixed(0) + 'K';
+                                    }
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle itemized deductions
+            document.getElementById('itemized-deductions').addEventListener('change', function () {
+                const itemizedDiv = document.getElementById('itemized-amount');
+                itemizedDiv.style.display = this.checked ? 'block' : 'none';
+                updateCalculations();
+            });
+
+            // Scenario buttons
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updateCharts();
+                });
+            });
+
+            // Update calculations when any input changes
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateCalculations);
+                input.addEventListener('change', updateCalculations);
+            });
+
+            // Initial calculation
+            updateCalculations();
+        });
+
+        // House affordability calculator
+        function calculateHouseAffordability() {
+            const income = parseFloat(document.getElementById('income').value);
+            const houseYears = parseInt(document.getElementById('house-years').value);
+            const currentSavings = parseFloat(document.getElementById('current-savings').value);
+            const savingsContrib = parseFloat(document.getElementById('savings-contrib').value);
+            const brokerageContrib = parseFloat(document.getElementById('brokerage-contrib').value);
+            const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
+            const stockReturn = parseFloat(document.getElementById('stock-return').value) / 100;
+
+            // Calculate available funds for house in X years
+            let totalSavingsForHouse = currentSavings;
+            let brokerageForHouse = 0;
+
+            for (let year = 0; year < houseYears; year++) {
+                totalSavingsForHouse = (totalSavingsForHouse + savingsContrib) * (1 + savingsRate);
+                brokerageForHouse = (brokerageForHouse + brokerageContrib) * (1 + stockReturn);
+            }
+
+            const totalAvailableForHouse = totalSavingsForHouse + brokerageForHouse * 0.8; // Only use 80% of brokerage
+
+            return {
+                availableForDownPayment: totalAvailableForHouse,
+                maxHousePrice: totalAvailableForHouse / 0.2, // Assuming 20% down
+                yearsToTarget: houseYears
+            };
+        }
+
+        // Add comparison metrics
+        function addComparisonMetrics() {
+            const projections = calculateScenarios();
+            const retirementAge = parseInt(document.getElementById('retirement-age').value);
+            const currentAge = parseInt(document.getElementById('current-age').value);
+            const yearsToRetirement = retirementAge - currentAge;
+
+            // Calculate retirement readiness for each scenario
+            const comparisonData = {};
+            for (const [key, projection] of Object.entries(projections)) {
+                const finalValue = projection[projection.length - 1].totalValue;
+                const annualExpenses = parseFloat(document.getElementById('income').value) * 0.8; // Assume 80% of current income needed
+                const safeWithdrawalAmount = finalValue * 0.04; // 4% rule
+
+                comparisonData[key] = {
+                    finalValue: finalValue,
+                    safeWithdrawalAmount: safeWithdrawalAmount,
+                    readinessRatio: safeWithdrawalAmount / annualExpenses,
+                    scenario: projection
+                };
+            }
+
+            return comparisonData;
+        }
+    </script>
+</body>
+
+</html>
